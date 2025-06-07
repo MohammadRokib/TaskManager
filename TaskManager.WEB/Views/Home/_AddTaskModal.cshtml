@@ -1,0 +1,147 @@
+﻿@using TaskManager.Models.Constants
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model TaskManager.Models.ViewModels.AddTaskViewModel
+
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <!-- Use modal-lg for a larger modal -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTaskForm" asp-controller="Home" asp-action="CreateTask" method="post">
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    <!-- Status (Disabled) -->
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label"></label>
+                        <input asp-for="Status" class="form-control" disabled value="@TaskManager.Models.Constants.TaskStatus.New" />
+                        <input type="hidden" asp-for="Status" value="@TaskManager.Models.Constants.TaskStatus.New" />
+                    </div>
+                    <!-- IsParent Checkbox -->
+                    <div class="mb-3 form-check">
+                        <input asp-for="IsParent" class="form-check-input" id="isParentCheckbox" checked />
+                        <label asp-for="IsParent" class="form-check-label"></label>
+                    </div>
+                    <!-- ParentTaskId Dropdown (Hidden by default) -->
+                    @* <div class="mb-3" id="parentTaskContainer"> *@
+                    @*     <label asp-for="ParentTaskId" class="form-label">Parent Task</label> *@
+                    @*     <select asp-for="ParentTaskId" class="form-control" id="parentTaskSelect" asp-items="@ViewBag.ParentTasks" disabled> *@
+                    @*         <option value="">Select Parent Task</option> *@
+                    @*     </select> *@
+                    @*     <span asp-validation-for="ParentTaskId" class="text-danger"></span> *@
+                    @* </div> *@
+
+                    @* <div class="mb-3" id="parentTaskContainer" style="display: none;"> *@
+                    <div class="mb-3" id="parentTaskContainer">
+                        <label asp-for="ParentTaskId" class="form-label"></label>
+                        <select asp-for="ParentTaskId" class="form-control" id="parentTaskSelect" asp-items="@(new SelectList(ViewBag.ParentTasks ?? new List<SelectListItem>(), "Value", "Text"))">
+                            <option value="">Select Parent Task</option>
+                        </select>
+                        <span asp-validation-for="ParentTaskId" class="text-danger"></span>
+                    </div>
+
+                    <!-- Priority -->
+                    <div class="mb-3">
+                        <label asp-for="Priority" class="form-label"></label>
+                        <select asp-for="Priority" class="form-control">
+                            <option value="">Select Priority</option>
+                            @foreach(var priority in Enum.GetValues(typeof(Priority)).Cast<Priority>())
+                            {
+                                <option value="@priority">@priority</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Severity -->
+                    <div class="mb-3">
+                        <label asp-for="Severity" class="form-label"></label>
+                        <select asp-for="Severity" class="form-control">
+                            <option value="">Select Priority</option>
+                            @foreach (var severity in Enum.GetValues(typeof(Severity)).Cast<Severity>())
+                            {
+                                <option value="@severity">@severity</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- ClientId Dropdown -->
+                    <div class="mb-3">
+                        <label asp-for="ClientId" class="form-label"></label>
+                        <select asp-for="ClientId" class="form-control" asp-items="@(new SelectList(ViewBag.Clients ?? new List<SelectListItem>(), "Value", "Text"))">
+                            <option value="">Select Client</option>
+                        </select>
+                        <span asp-validation-for="ClientId" class="text-danger"></span>
+                    </div>
+                    <!-- UserId (Read-only) -->
+                    <div class="mb-3">
+                        <label asp-for="UserId" class="form-label"></label>
+                        <input type="text" class="form-control" value="@ViewBag.UserName" disabled />
+                        <input type="hidden" asp-for="UserId" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="addTaskForm" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            // Toggle ParentTaskId dropdown based on IsParent checkbox
+            $(document).on('change', '#isParentCheckbox', function () {
+                console.log("IsParent checkbox changed: " + $(this).is(':checked'));
+                var parentTaskSelect = $('#parentTaskSelect');
+                if ($(this).is(':checked')) {
+                    parentTaskSelect.prop('disabled', true);
+                    parentTaskSelect.val(''); // Clear ParentTaskId when IsParent is checked
+                } else {
+                    parentTaskSelect.prop('disabled', false);
+                }
+            });
+
+            // Trigger toggle on modal show to ensure initial state
+            $('#addTaskModal').on('shown.bs.modal', function () {
+                console.log("Modal shown, IsParent checked: " + $('#isParentCheckbox').is(':checked'));
+                var parentTaskSelect = $('#parentTaskSelect');
+                parentTaskSelect.prop('disabled', $('#isParentCheckbox').is(':checked'));
+            });
+
+            // Client-side validation and AJAX form submission
+            $('#addTaskForm').on('submit', function (e) {
+                e.preventDefault();
+                if ($(this).valid()) {
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        type: $(this).attr('method'),
+                        data: $(this).serialize(),
+                        success: function (response) {
+                            $('#addTaskModal').modal('hide');
+                            location.reload();
+                        },
+                        error: function (xhr) {
+                            alert('Error adding task. Please try again.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,63 @@
+﻿@using TaskManager.Models.ViewModels
+@model List<ClientDashboardViewModel>
+
+@{
+    ViewData["Title"] = "Clients";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Capital Market Solutions</h1>
+</div>
+<div class="container">
+    <div class="row pt-4 pb-2">
+        <div class="col-6">
+            <h2 class="text-primary">Clients List</h2>
+        </div>
+        <div class="col-6 text-end">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                <i class="bi bi-plus-square-fill"></i> Add New Client
+            </button>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th class="text-center">
+                    Short Name
+                </th>
+                <th class="text-center">
+                    Full Name
+                </th>
+                <th class="text-center">
+                    Address
+                </th>
+                <th class="text-center">
+                    Ordered Tasks
+                </th>
+                <th class="text-center">
+                    Pending Tasks
+                </th>
+                <th class="text-center">
+                    Completed Tasks
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var obj in Model)
+            {
+                <tr>
+                    <td class="text-center">@obj.ShortName</td>
+                    <td>@obj.FullName</td>
+                    <td class="text-center">@obj.Address</td>
+                    <td class="text-center">@obj.OrderedTasks</td>
+                    <td class="text-center">@obj.PendingTasks</td>
+                    <td class="text-center">@obj.CompletedTasks</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+    <!-- Include the partial view for the modal -->
+    <partial name="_AddClientModal" model="new AddClientViewModel()" />
+</div>

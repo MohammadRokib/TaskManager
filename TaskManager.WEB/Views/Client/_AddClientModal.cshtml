@@ -1,0 +1,60 @@
+﻿@model TaskManager.Models.ViewModels.AddClientViewModel
+
+<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClientModalLabel">Add New Client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addClientForm" asp-controller="Client" asp-action="Create" method="post">
+                    <div class="mb-3">
+                        <label asp-for="ClientShortName" class="form-label"></label>
+                        <input asp-for="ClientShortName" class="form-control" />
+                        <span asp-validation-for="ClientShortName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ClientFullName" class="form-label"></label>
+                        <input asp-for="ClientFullName" class="form-control" />
+                        <span asp-validation-for="ClientFullName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ClientAddress" class="form-label"></label>
+                        <input asp-for="ClientAddress" class="form-control" />
+                        <span asp-validation-for="ClientAddress" class="text-danger"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="addClientForm" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#addClientForm').on('submit', function (e) {
+                e.preventDefault();
+                if ($(this).valid()) {
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        type: $(this).attr('method'),
+                        data: $(this).serialize(),
+                        success: function (response) {
+                            $('#addClientModal').modal('hide');
+                            location.reload();
+                        },
+                        error: function (xhr) {
+                            alert('Error adding client. Please try again.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}
