@@ -28,6 +28,7 @@ namespace TaskManager.Services
                 List<TaskDashboardViewModel> TasksList = await _context.Tasks
                     .Select(t => new TaskDashboardViewModel()
                     {
+                        TaskId = t.TaskId,
                         TaskTitle = t.Title,
                         ClientFullname = t.Client.ClientFullName,
                         IssueTime = t.StartTime,
@@ -71,6 +72,8 @@ namespace TaskManager.Services
                 StartTime = DateTime.Now,
                 Duration = 0.0,
                 Status = Models.Constants.TaskStatus.New,
+                Priority = request.Priority,
+                Severity = request.Severity,
                 IsParent = request.IsParent,
                 UserId = request.UserId,
                 ClientId = request.ClientId

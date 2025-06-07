@@ -73,6 +73,14 @@ namespace TaskManager.WEB.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        public async Task<IActionResult> Edit(int? taskId)
+        {
+            if (taskId is null || taskId == 0)
+                return NotFound();
+
+            return View(new AddTaskViewModel());
+        }
+
         public IActionResult Privacy()
         {
             return View();

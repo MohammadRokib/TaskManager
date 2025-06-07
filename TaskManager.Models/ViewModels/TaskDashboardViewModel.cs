@@ -8,6 +8,7 @@ namespace TaskManager.Models.ViewModels
 {
     public class TaskDashboardViewModel
     {
+        public int TaskId { get; set; }
         public string TaskTitle { get; set; }
         public string ClientFullname { get; set; }
         public DateTime IssueTime { get; set; }

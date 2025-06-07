@@ -16,6 +16,8 @@ namespace TaskManager.Models.Entities
         public DateTime? Endtime { get; set; }
         public double? Duration { get; set; }
         public Constants.TaskStatus Status { get; set; }
+        public Constants.Priority Priority { get; set; }
+        public Constants.Severity Severity { get; set; }
         public bool IsParent { get; set; }
         public string UserId { get; set; }
         public int ClientId { get; set; }
