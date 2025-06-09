@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TaskManager.Models.Entities;
 
 namespace TaskManager.Models.ViewModels
 {
-    public class UpdateTaskViewModel
+    public class UpdateTaskViewModel : AddTaskViewModel
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public int TaskId { get; set; }
         public double? Duration { get; set; }
-        public Constants.TaskStatus Status { get; set; }
     }
 }

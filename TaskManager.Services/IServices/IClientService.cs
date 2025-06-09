@@ -9,7 +9,8 @@ namespace TaskManager.Services.IServices
 {
     public interface IClientService
     {
-        Task<(List<ClientDashboardViewModel>?, string?)> GetClientDashBoardAsync();
         Task<string?> AddClient(AddClientViewModel request);
+        Task<List<ClientListViewModel>?> GetClientsWithIdAsync();
+        Task<(List<ClientDashboardViewModel>?, string?)> GetClientDashBoardAsync();
     }
 }

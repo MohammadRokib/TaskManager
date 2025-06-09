@@ -1,0 +1,150 @@
+﻿@using TaskManager.Models.Constants
+@using TaskManager.Models.ViewModels
+@model UpdateTaskViewModel
+
+@{
+    ViewData["Title"] = "Edit Task";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Edit Task</h2>
+    <form id="updateTaskForm" asp-controller="Home" asp-action="Edit" method="post">
+        <input asp-for="TaskId" hidden />
+
+        <!-- Title -->
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+        <!-- Description -->
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+        <!-- IsParent Checkbox -->
+        <div class="mb-3 form-check">
+            <input asp-for="IsParent" class="form-check-input" id="isParentCheckbox" />
+            <label asp-for="IsParent" class="form-check-label"></label>
+        </div>
+        <!-- Parent Task -->
+        <div class="mb-3" id="parentTaskContainer">
+            <label asp-for="ParentTaskId" class="form-label"></label>
+            <select asp-for="ParentTaskId" class="form-control" id="parentTaskSelect" asp-items="@(new SelectList(ViewBag.ParentTasks ?? new List<SelectListItem>(), "Value", "Text"))">
+                <option value="">Select Parent Task</option>
+            </select>
+            <span asp-validation-for="ParentTaskId" class="text-danger"></span>
+        </div>
+
+        <!-- Status, Priority, and Severity in a single row with flexbox -->
+        <div class="mb-3 d-flex justify-content-between">
+            <!-- Status -->
+            <div class="flex-fill ms-2">
+                <label asp-for="Status" class="form-label"></label>
+                <select asp-for="Status" class="form-control">
+                    <option value="@Model.Status">Select Status</option>
+                    @foreach (var status in Enum.GetValues(typeof(TaskManager.Models.Constants.TaskStatus)).Cast<TaskManager.Models.Constants.TaskStatus>())
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
+            </div>
+            <!-- Priority -->
+            <div class="flex-fill mx-2">
+                <label asp-for="Priority" class="form-label"></label>
+                <select asp-for="Priority" class="form-control">
+                    <option value="@Model.Priority">Select Priority</option>
+                    @foreach (var priority in Enum.GetValues(typeof(Priority)).Cast<Priority>())
+                    {
+                        <option value="@priority">@priority</option>
+                    }
+                </select>
+            </div>
+            <!-- Severity -->
+            <div class="flex-fill me-2">
+                <label asp-for="Severity" class="form-label"></label>
+                <select asp-for="Severity" class="form-control">
+                    <option value="@Model.Severity">Select Severity</option>
+                    @foreach (var severity in Enum.GetValues(typeof(Severity)).Cast<Severity>())
+                    {
+                        <option value="@severity">@severity</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <!-- Duration, ClientId, and UserId in a single row with flexbox -->
+        <div class="mb-3 d-flex justify-content-between">
+            <!-- Duration -->
+            <div class="flex-fill ms-2">
+                <label asp-for="Duration" class="form-label"></label>
+                <input asp-for="Duration" class="form-control" value="@Model.Duration" />
+                <span asp-validation-for="Duration" class="text-danger"></span>
+            </div>
+            <!-- ClientId Dropdown -->
+            <div class="flex-fill mx-2">
+                <label asp-for="ClientId" class="form-label"></label>
+                <select asp-for="ClientId" class="form-control" asp-items="@(new SelectList(ViewBag.Clients ?? new List<SelectListItem>(), "Value", "Text"))">
+                    <option value="@Model.ClientId">Select Client</option>
+                </select>
+                <span asp-validation-for="ClientId" class="text-danger"></span>
+            </div>
+            <!-- UserId (Read-only) -->
+            <div class="flex-fill me-2">
+                <label asp-for="UserId" class="form-label"></label>
+                <input type="text" class="form-control" value="@ViewBag.UserName" disabled />
+                <input type="hidden" asp-for="UserId" />
+            </div>
+        </div>
+        <!-- Form Buttons -->
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary me-2">Submit</button>
+            <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            // Toggle ParentTaskId dropdown based on IsParent checkbox
+            $(document).on('change', '#isParentCheckbox', function () {
+                console.log("IsParent checkbox changed: " + $(this).is(':checked'));
+                var parentTaskContainer = $('#parentTaskContainer');
+                if ($(this).is(':checked')) {
+                    parentTaskContainer.hide();
+                    $('#parentTaskSelect').val(''); // Clear ParentTaskId when IsParent is checked
+                } else {
+                    parentTaskContainer.show();
+                }
+            });
+
+            // Trigger toggle on page load to ensure initial state
+            var parentTaskContainer = $('#parentTaskContainer');
+            if ($('#isParentCheckbox').is(':checked')) {
+                parentTaskContainer.hide();
+            } else {
+                parentTaskContainer.show();
+            }
+
+            // Client-side validation and AJAX form submission
+            $('#updateTaskForm').on('submit', function (e) {
+                e.preventDefault();
+                if ($(this).valid()) {
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        type: $(this).attr('method'),
+                        data: $(this).serialize(),
+                        success: function (response) {
+                            window.location.href = '@Url.Action("Index", "Home")';
+                        },
+                        error: function (xhr) {
+                            alert('Error updating task. Please try again.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

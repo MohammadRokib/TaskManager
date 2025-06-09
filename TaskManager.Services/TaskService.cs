@@ -13,15 +13,13 @@ using TaskManager.Services.IServices;
 
 namespace TaskManager.Services
 {
-    public class TaskService(UserManager<User> userManager, TaskManagerDbContext context) : ITaskService
+    public class TaskService(UserManager<User> userManager, TaskManagerDbContext context, IClientService clientService) : ITaskService
     {
         private readonly TaskManagerDbContext _context = context;
         private readonly UserManager<User> _userManager = userManager;
+        private readonly IClientService _clientService = clientService;
 
-        public async Task<(List<TaskDashboardViewModel>?,
-                           List<ClientListViewModel>?,
-                           List<ParentTaskListViewModel>?,
-                           string?)> GetDashBoardAsync()
+        public async Task<(List<TaskDashboardViewModel>?, string?)> GetDashBoardAsync()
         {
             try
             {
@@ -37,29 +35,45 @@ namespace TaskManager.Services
                     })
                     .ToListAsync();
 
-                List<ClientListViewModel>? ClientsList = await _context.Clients
-                    .Select(c => new ClientListViewModel()
-                    {
-                        Value = c.ClientId,
-                        Text = c.ClientFullName
-                    })
-                    .ToListAsync();
-
-                List<ParentTaskListViewModel>? ParentTasksList = await _context.Tasks
-                    .Where(t => t.IsParent)
-                    .Select(t => new ParentTaskListViewModel()
-                    {
-                        Value = t.TaskId,
-                        Text = t.Title
-                    })
-                    .ToListAsync();
-
-                return (TasksList, ClientsList, ParentTasksList, null);
+                return (TasksList, null);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
-                return (null, null, null, "Something went wrong");
+                return (null, "Something went wrong");
+            }
+        }
+
+        public async Task<(UpdateTaskViewModel?, string?)> GetTaskByIdAsync(int? taskId)
+        {
+            try
+            {
+                UpdateTaskViewModel? taskObj = await _context.Tasks
+                .Where(t => t.TaskId == taskId)
+                .Select(t => new UpdateTaskViewModel()
+                {
+                    TaskId = t.TaskId,
+                    Title = t.Title,
+                    Description = t.Description,
+                    Status = t.Status,
+                    Priority = t.Priority,
+                    Severity = t.Severity,
+                    IsParent = t.IsParent,
+                    ClientId = t.ClientId,
+                    UserId = t.UserId,
+                    ParentTaskId = t.ParentTaskId
+                })
+                .FirstOrDefaultAsync();
+
+                if (taskObj is null)
+                    return (null, "Task not found");
+
+                return (taskObj, null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return (null, "Something went wrong");
             }
         }
 
@@ -87,7 +101,7 @@ namespace TaskManager.Services
             try
             {
                 await _context.Tasks.AddAsync(newTask);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -96,6 +110,61 @@ namespace TaskManager.Services
             }
 
             return null;
+        }
+
+        public async Task<List<ParentTaskListViewModel>?> GetParentTasksAsync()
+        {
+            try
+            {
+                List<ParentTaskListViewModel>? ParentTasksList = await _context.Tasks
+                        .Where(t => t.IsParent)
+                        .Select(t => new ParentTaskListViewModel()
+                        {
+                            Value = t.TaskId,
+                            Text = t.Title
+                        })
+                        .ToListAsync();
+                return ParentTasksList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return new List<ParentTaskListViewModel>();
+            }
+        }
+
+        public async Task<string?> UpdateTaskAsync(UpdateTaskViewModel taskObj)
+        {
+            try
+            {
+                Models.Entities.Task? taskFromDb = await _context.Tasks
+                    .Where(t => t.TaskId == taskObj.TaskId)
+                    .FirstOrDefaultAsync();
+
+                if (taskFromDb is null)
+                    return "Task not found";
+
+                taskFromDb.Title = taskObj.Title;
+                taskFromDb.Description = taskObj.Description;
+                taskFromDb.Status = taskObj.Status;
+                taskFromDb.Priority = taskObj.Priority;
+                taskFromDb.Severity = taskObj.Severity;
+                taskFromDb.IsParent = taskObj.IsParent;
+                taskFromDb.UserId = taskObj.UserId;
+                taskFromDb.ClientId = taskObj.ClientId;
+                taskFromDb.ParentTaskId = taskObj.ParentTaskId;
+                taskFromDb.TaskId = taskObj.TaskId;
+                taskFromDb.Duration = taskObj.Duration;
+
+                _context.Tasks.Update(taskFromDb);
+                _context.SaveChanges();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return "Something went wrong";
+            }
         }
     }
 }

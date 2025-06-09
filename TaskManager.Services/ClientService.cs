@@ -61,21 +61,25 @@ namespace TaskManager.Services
             }
             return null;
         }
-        //public async Task<string?> LoginAsync(LoginViewModel request)
-        //{
-        //    try
-        //    {
-        //        var result = await _signInManager.PasswordSignInAsync(request.Email, request.Password, request.RememberMe, false);
-        //        if (result.Succeeded)
-        //            return null;
 
-        //        return "Email or Password is incorrect";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex);
-        //        return "Something went wrong";
-        //    }
-        //}
+        public async Task<List<ClientListViewModel>?> GetClientsWithIdAsync()
+        {
+            try
+            {
+                List<ClientListViewModel>? ClientsList = await _context.Clients
+                        .Select(c => new ClientListViewModel()
+                        {
+                            Value = c.ClientId,
+                            Text = c.ClientFullName
+                        })
+                        .ToListAsync();
+                return ClientsList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return new List<ClientListViewModel>();
+            }
+        }
     }
 }

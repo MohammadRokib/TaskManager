@@ -15,43 +15,30 @@ namespace TaskManager.WEB.Controllers
     public class HomeController : Controller
     {
         private readonly ITaskService _taskService;
-        private readonly ILogger<HomeController> _logger;
+        private readonly IClientService _clientService;
         private readonly UserManager<User> _userManager;
+        private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger, ITaskService taskService, UserManager<User> userManager)
+        public HomeController(ILogger<HomeController> logger, ITaskService taskService, UserManager<User> userManager, IClientService clientService)
         {
             _logger = logger;
             _taskService = taskService;
             _userManager = userManager;
+            _clientService = clientService;
         }
 
         public async Task<IActionResult> Index()
         {
-            (List<TaskDashboardViewModel>? tasks,
-                List<ClientListViewModel>? clients,
-                List<ParentTaskListViewModel>? parentTasks,
-                string? error) = await _taskService.GetDashBoardAsync();
-
-            ViewBag.Clients = clients;
-            ViewBag.ParentTasks = parentTasks;
-
+            (List<TaskDashboardViewModel>? tasks, string? error) = await _taskService.GetDashBoardAsync();
             User? CurrentUser = await _userManager.GetUserAsync(User);
-            if (CurrentUser is null)
-            {
-                ViewBag.ErrorMessage = "User not found. Please log in.";
-                ViewBag.UserName = "Unknown";
-                ViewBag.UserId = null;
-            }
-            else
-            {
-                ViewBag.UserName = CurrentUser.Name;
-                ViewBag.UserId = CurrentUser.Id;
-            }
+
+            ViewBag.Clients = await _clientService.GetClientsWithIdAsync();
+            ViewBag.ParentTasks = await _taskService.GetParentTasksAsync();
+            ViewBag.UserName = CurrentUser?.Name ?? "Unknown";
+            ViewBag.UserId = CurrentUser?.Id ?? null;
 
             if (error is null)
-            {
                 return View(tasks ?? new List<TaskDashboardViewModel>());
-            }
 
             ModelState.AddModelError("", error!);
             return View();
@@ -78,7 +65,33 @@ namespace TaskManager.WEB.Controllers
             if (taskId is null || taskId == 0)
                 return NotFound();
 
-            return View(new AddTaskViewModel());
+            User? CurrentUser = await _userManager.GetUserAsync(User);
+            (UpdateTaskViewModel? taskObj, string? error) = await _taskService.GetTaskByIdAsync(taskId);
+            
+            ViewBag.Clients = await _clientService.GetClientsWithIdAsync();
+            ViewBag.ParentTasks = await _taskService.GetParentTasksAsync();
+            ViewBag.UserName = CurrentUser?.Name ?? "Unknown";
+            ViewBag.UserId = CurrentUser?.Id ?? null;
+
+            if (error is null)
+                return View(taskObj);
+
+            ModelState.AddModelError("", error);
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(UpdateTaskViewModel taskObj)
+        {
+            if (ModelState.IsValid)
+            {
+                string? error = await _taskService.UpdateTaskAsync(taskObj);
+                if (error is null)
+                    return RedirectToAction("Index", "Home");
+
+                ModelState.AddModelError("", error);
+            }
+            return View(taskObj);
         }
 
         public IActionResult Privacy()

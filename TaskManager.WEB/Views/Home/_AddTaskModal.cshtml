@@ -24,12 +24,6 @@
                         <textarea asp-for="Description" class="form-control" rows="5"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
-                    <!-- Status (Disabled) -->
-                    <div class="mb-3">
-                        <label asp-for="Status" class="form-label"></label>
-                        <input asp-for="Status" class="form-control" disabled value="@TaskManager.Models.Constants.TaskStatus.New" />
-                        <input type="hidden" asp-for="Status" value="@TaskManager.Models.Constants.TaskStatus.New" />
-                    </div>
                     <!-- IsParent Checkbox -->
                     <div class="mb-3 form-check">
                         <input asp-for="IsParent" class="form-check-input" id="isParentCheckbox" checked />
@@ -53,43 +47,54 @@
                         <span asp-validation-for="ParentTaskId" class="text-danger"></span>
                     </div>
 
-                    <!-- Priority -->
-                    <div class="mb-3">
-                        <label asp-for="Priority" class="form-label"></label>
-                        <select asp-for="Priority" class="form-control">
-                            <option value="">Select Priority</option>
-                            @foreach(var priority in Enum.GetValues(typeof(Priority)).Cast<Priority>())
-                            {
-                                <option value="@priority">@priority</option>
-                            }
-                        </select>
+                    <div class="mb-3 d-flex justify-content-between">
+                        <!-- Status (Disabled) -->
+                        <div class="flex-fill me-2">
+                            <label asp-for="Status" class="form-label"></label>
+                            <input asp-for="Status" class="form-control" disabled value="@TaskManager.Models.Constants.TaskStatus.New" />
+                            <input type="hidden" asp-for="Status" value="@TaskManager.Models.Constants.TaskStatus.New" />
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="flex-fill mx-2">
+                            <label asp-for="Priority" class="form-label"></label>
+                            <select asp-for="Priority" class="form-control">
+                                <option value="">Select Priority</option>
+                                @foreach(var priority in Enum.GetValues(typeof(Priority)).Cast<Priority>())
+                                {
+                                    <option value="@priority">@priority</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Severity -->
+                        <div class="flex-fill ms-2">
+                            <label asp-for="Severity" class="form-label"></label>
+                            <select asp-for="Severity" class="form-control">
+                                <option value="">Select Severity</option>
+                                @foreach (var severity in Enum.GetValues(typeof(Severity)).Cast<Severity>())
+                                {
+                                    <option value="@severity">@severity</option>
+                                }
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Severity -->
-                    <div class="mb-3">
-                        <label asp-for="Severity" class="form-label"></label>
-                        <select asp-for="Severity" class="form-control">
-                            <option value="">Select Priority</option>
-                            @foreach (var severity in Enum.GetValues(typeof(Severity)).Cast<Severity>())
-                            {
-                                <option value="@severity">@severity</option>
-                            }
-                        </select>
-                    </div>
-
-                    <!-- ClientId Dropdown -->
-                    <div class="mb-3">
-                        <label asp-for="ClientId" class="form-label"></label>
-                        <select asp-for="ClientId" class="form-control" asp-items="@(new SelectList(ViewBag.Clients ?? new List<SelectListItem>(), "Value", "Text"))">
-                            <option value="">Select Client</option>
-                        </select>
-                        <span asp-validation-for="ClientId" class="text-danger"></span>
-                    </div>
-                    <!-- UserId (Read-only) -->
-                    <div class="mb-3">
-                        <label asp-for="UserId" class="form-label"></label>
-                        <input type="text" class="form-control" value="@ViewBag.UserName" disabled />
-                        <input type="hidden" asp-for="UserId" />
+                    <div class="mb-3 d-flex justify-content-between">
+                        <!-- ClientId Dropdown -->
+                        <div class="flex-fill mx-2">
+                            <label asp-for="ClientId" class="form-label"></label>
+                            <select asp-for="ClientId" class="form-control" asp-items="@(new SelectList(ViewBag.Clients ?? new List<SelectListItem>(), "Value", "Text"))">
+                                <option value="">Select Client</option>
+                            </select>
+                            <span asp-validation-for="ClientId" class="text-danger"></span>
+                        </div>
+                        <!-- UserId (Read-only) -->
+                        <div class="flex-fill ms-2">
+                            <label asp-for="UserId" class="form-label"></label>
+                            <input type="text" class="form-control" value="@ViewBag.UserName" disabled />
+                            <input type="hidden" asp-for="UserId" />
+                        </div>
                     </div>
                 </form>
             </div>

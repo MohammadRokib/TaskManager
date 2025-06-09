@@ -9,10 +9,10 @@ namespace TaskManager.Services.IServices
 {
     public interface ITaskService
     {
-        Task<(List<TaskDashboardViewModel>?,
-              List<ClientListViewModel>?,
-              List<ParentTaskListViewModel>?,
-              string?)> GetDashBoardAsync();
         Task<string?> AddTaskAsync(AddTaskViewModel request);
+        Task<string?> UpdateTaskAsync(UpdateTaskViewModel taskObj);
+        Task<List<ParentTaskListViewModel>?> GetParentTasksAsync();
+        Task<(List<TaskDashboardViewModel>?, string?)> GetDashBoardAsync();
+        Task<(UpdateTaskViewModel?, string?)> GetTaskByIdAsync(int? taskId);
     }
 }
