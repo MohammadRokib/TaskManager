@@ -11,5 +11,8 @@ namespace TaskManager.Models.Entities
     {
         public string? Name { get; set; }
         public List<Task>? AssignedTasks { get; set; }
+        public string? Address { get; set; }
+        public string? Designation { get; set; }
+        public string? Department { get; set; }
     }
 }
