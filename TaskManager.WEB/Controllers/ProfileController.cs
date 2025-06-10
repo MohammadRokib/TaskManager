@@ -3,12 +3,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.Models.Entities;
 using TaskManager.Models.ViewModels;
+using TaskManager.Services.IServices;
 
 namespace TaskManager.WEB.Controllers
 {
-    public class ProfileController(UserManager<User> userManager) : Controller
+    public class ProfileController(UserManager<User> userManager, IProfileService profileService) : Controller
     {
         private readonly UserManager<User> _userManager = userManager;
+        private readonly IProfileService _profileService = profileService;
+
         public async Task<IActionResult> Index()
         {
             try
@@ -35,6 +38,22 @@ namespace TaskManager.WEB.Controllers
                 return NotFound();
             }
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Update(UserProfileViewModel request)
+        {
+            if (ModelState.IsValid)
+            {
+                string? error = await _profileService.UpdateUserAsync(request);
+                if (error is null)
+                    return RedirectToAction("Index", "Profile");
+
+                ModelState.AddModelError("", error);
+            }
+            
+            ViewBag.IsEditMode = true;
+            return View("Index", request);
         }
     }
 }

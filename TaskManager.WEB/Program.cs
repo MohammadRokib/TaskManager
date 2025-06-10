@@ -4,6 +4,7 @@ using TaskManager.DataAccess.Data;
 using TaskManager.Models.Entities;
 using TaskManager.Services;
 using TaskManager.Services.IServices;
+using TaskManager.Services.Services.ProfileService;
 using TaskManager.Services.Services.TaskService;
 
 namespace TaskManager.WEB
@@ -23,6 +24,7 @@ namespace TaskManager.WEB
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ITaskService, TaskService>();
             builder.Services.AddScoped<IClientService, ClientService>();
+            builder.Services.AddScoped<IProfileService, ProfileService>();
 
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {

@@ -7,98 +7,193 @@
 
 <section style="background-color: #eee;">
     <div class="container py-3">
-        <div class="row align-items-stretch">
-            <div class="col-lg-4">
-                <div class="card mb-4 h-100">
-                    <div class="card-body text-center">
-                        <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp" alt="avatar"
-                             class="rounded-circle img-fluid" style="width: 150px;">
-                        <h5 class="my-3">@Model.Name</h5>
-                        <p class="text-muted mb-1">@Model.Designation</p>
-                        <p class="text-muted mb-4">@Model.Department</p>
-                        <div class="d-flex justify-content-center mb-2">
-                            <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary">Update Profile</button>
+        <form asp-controller="Profile" asp-action="Update" method="post" id="profileForm">
+            <div class="row align-items-stretch">
+                <div class="col-lg-4">
+                    <div class="card mb-4 h-100">
+                        <div class="card-body text-center">
+                                <input asp-for="Id" hidden />
+
+                                <div class="text-center">
+                                    <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp" alt="avatar"
+                                         class="rounded-circle img-fluid" style="width: 150px;">
+
+                                    <div id="viewMode">
+                                        <h5 class="my-3">@Model.Name</h5>
+                                        <p class="text-muted mb-1">@Model.Designation</p>
+                                        <p class="text-muted mb-4">@Model.Department</p>
+                                    </div>
+
+                                    <div id="editMode" style="display: none;">
+                                        <h5 class="my-3">@Model.Name</h5>
+                                        <div class="mb-2 text-start">
+                                            <label asp-for="Designation" class="form-label">Designation</label>
+                                            <input class="form-control" asp-for="Designation" />
+                                        </div>
+
+                                        <div class="mb-2 text-start">
+                                            <label asp-for="Department" class="form-label">Department</label>
+                                            <input class="form-control" asp-for="Department" />
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-center mt-2">
+                                        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary" id="editBtn">Update Profile</button>
+                                        <button type="submit" data-mdb-button-init data-mdb-ripple-init class="btn btn-success" id="saveBtn" style="display: none;">Save</button>
+                                        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-secondary ms-1" id="cancelBtn" style="display: none;">Cancel</button>
+                                    </div>
+                                </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Full Name</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0 view-field">@Model.Name</p>
+                                    <input asp-for="Name" class="form-control edit-field" style="display:none;" />
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Email</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0 view-field">@Model.Email</p>
+                                    <input asp-for="Email" class="form-control edit-field" style="display:none;" />
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Mobile</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0 view-field">@Model.Phone</p>
+                                    <input asp-for="Phone" class="form-control edit-field" style="display:none;" />
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Address</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0 view-field">@Model.Address</p>
+                                    <input asp-for="Address" class="form-control edit-field" style="display:none;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card mb-4 mb-md-0">
+                                <div class="card-body">
+                                    <p class="mb-4">
+                                        <span class="text-primary font-italic me-1">assigment</span> Project Status
+                                    </p>
+                                    <p class="mb-1" style="font-size: .77rem;">Web Design</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="80"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 72%" aria-valuenow="72"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 89%" aria-valuenow="89"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 55%" aria-valuenow="55"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
+                                    <div class="progress rounded mb-2" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 66%" aria-valuenow="66"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-8">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <p class="mb-0">Full Name</p>
-                            </div>
-                            <div class="col-sm-9">
-                                <p class="text-muted mb-0">@Model.Name</p>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <p class="mb-0">Email</p>
-                            </div>
-                            <div class="col-sm-9">
-                                <p class="text-muted mb-0">@Model.Email</p>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <p class="mb-0">Mobile</p>
-                            </div>
-                            <div class="col-sm-9">
-                                <p class="text-muted mb-0">@Model.Phone</p>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <p class="mb-0">Address</p>
-                            </div>
-                            <div class="col-sm-9">
-                                <p class="text-muted mb-0">@Model.Address</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card mb-4 mb-md-0">
-                            <div class="card-body">
-                                <p class="mb-4">
-                                    <span class="text-primary font-italic me-1">assigment</span> Project Status
-                                </p>
-                                <p class="mb-1" style="font-size: .77rem;">Web Design</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="80"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 72%" aria-valuenow="72"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 89%" aria-valuenow="89"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 55%" aria-valuenow="55"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
-                                <div class="progress rounded mb-2" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 66%" aria-valuenow="66"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </form>
     </div>
 </section>
+
+<!--
+@* @section Scripts { *@
+     <script>
+         document.getElementById("editBtn").addEventListener("click", function () {
+             document.getElementById("editMode").style.display = "block";
+             document.getElementById("viewMode").style.display = "none";
+
+             document.querySelectorAll(".view-field").forEach(e => e.style.display = "none");
+             document.querySelectorAll(".edit-field").forEach(e => e.style.display = "block");
+
+             document.getElementById("editBtn").style.display = "none";
+             document.getElementById("saveBtn").style.display = "inline-block";
+             document.getElementById("cancelBtn").style.display = "inline-block";
+         });
+
+         document.getElementById("cancelBtn").addEventListener("click", function () {
+             document.getElementById("editMode").style.display = "none";
+             document.getElementById("viewMode").style.display = "block";
+
+             document.querySelectorAll(".view-field").forEach(e => e.style.display = "block");
+             document.querySelectorAll(".edit-field").forEach(e => e.style.display = "none");
+
+             document.getElementById("editBtn").style.display = "inline-block";
+             document.getElementById("saveBtn").style.display = "none";
+             document.getElementById("cancelBtn").style.display = "none";
+         });
+     </script>
+ }
+-->
+@section Scripts {
+    <script>
+        const enterEditMode = () => {
+            document.getElementById("editMode").style.display = "block";
+            document.getElementById("viewMode").style.display = "none";
+
+            document.querySelectorAll(".view-field").forEach(e => e.style.display = "none");
+            document.querySelectorAll(".edit-field").forEach(e => e.style.display = "block");
+
+            document.getElementById("editBtn").style.display = "none";
+            document.getElementById("saveBtn").style.display = "inline-block";
+            document.getElementById("cancelBtn").style.display = "inline-block";
+        };
+
+        document.getElementById("editBtn").addEventListener("click", enterEditMode);
+
+        document.getElementById("cancelBtn").addEventListener("click", function () {
+            document.getElementById("editMode").style.display = "none";
+            document.getElementById("viewMode").style.display = "block";
+
+            document.querySelectorAll(".view-field").forEach(e => e.style.display = "block");
+            document.querySelectorAll(".edit-field").forEach(e => e.style.display = "none");
+
+            document.getElementById("editBtn").style.display = "inline-block";
+            document.getElementById("saveBtn").style.display = "none";
+            document.getElementById("cancelBtn").style.display = "none";
+        });
+
+        // Auto-enable edit mode on validation error or failed update
+        @if (ViewBag.IsEditMode != null && (bool)ViewBag.IsEditMode)
+        {
+            <text>window.addEventListener("DOMContentLoaded", enterEditMode);</text>
+        }
+    </script>
+}
