@@ -27,21 +27,48 @@ namespace TaskManager.WEB.Controllers
             _clientService = clientService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
         {
-            (List<TaskDashboardViewModel>? tasks, string? error) = await _taskService.GetDashBoardAsync();
             User? CurrentUser = await _userManager.GetUserAsync(User);
+            var (tasks, error) = await _taskService.GetDashBoardAsync(CurrentUser!, page, pageSize);
+
+            if (error is not null)
+                return BadRequest("Error loading tasks.");
 
             ViewBag.Clients = await _clientService.GetClientsWithIdAsync();
-            ViewBag.ParentTasks = await _taskService.GetParentTasksAsync();
             ViewBag.UserName = CurrentUser?.Name ?? "Unknown";
             ViewBag.UserId = CurrentUser?.Id ?? null;
+            ViewBag.Pagesize = pageSize;
 
-            if (error is null)
-                return View(tasks ?? new List<TaskDashboardViewModel>());
+            return View(tasks);
+        }
 
-            ModelState.AddModelError("", error!);
-            return View();
+        [HttpGet]
+        public async Task<IActionResult> LoadTasks(int page = 1, int pageSize = 10)
+        {
+            User? currentUser = await _userManager.GetUserAsync(User);
+            var (tasks, error) = await _taskService.GetDashBoardAsync(currentUser!, page, pageSize);
+
+            if (error is not null)
+                return BadRequest("Error loading tasks.");
+
+            return PartialView("_TaskTablePartial", tasks ?? new PaginatedTaskDashboard());
+            //return Content($"Page: {page}, PageSize: {pageSize}, Tasks: {tasks?.Tasks?.Count ?? 0}");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchParentTasks(string searchTerm = "", int take = 10)
+        {
+            try
+            {
+                var parentTasks = await _taskService.GetParentTasksAsync(searchTerm, take);
+                return Json(parentTasks ?? new List<ParentTaskListViewModel>());
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error searching parent tasks");
+                return Json(new List<ParentTaskListViewModel>());
+            }
         }
 
         [HttpPost]
@@ -66,7 +93,7 @@ namespace TaskManager.WEB.Controllers
                 return NotFound();
 
             User? CurrentUser = await _userManager.GetUserAsync(User);
-            (UpdateTaskViewModel? taskObj, string? error) = await _taskService.GetTaskByIdAsync(taskId);
+            (UpdateTaskViewModel? taskObj, string? error) = await _taskService.GetTaskByIdAsync(taskId, CurrentUser!);
             
             ViewBag.Clients = await _clientService.GetClientsWithIdAsync();
             ViewBag.ParentTasks = await _taskService.GetParentTasksAsync();

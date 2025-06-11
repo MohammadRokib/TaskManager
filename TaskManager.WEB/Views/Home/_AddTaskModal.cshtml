@@ -39,12 +39,29 @@
                     @* </div> *@
 
                     @* <div class="mb-3" id="parentTaskContainer" style="display: none;"> *@
+                    <!--
                     <div class="mb-3" id="parentTaskContainer">
                         <label asp-for="ParentTaskId" class="form-label"></label>
                         <select asp-for="ParentTaskId" class="form-control" id="parentTaskSelect" asp-items="@(new SelectList(ViewBag.ParentTasks ?? new List<SelectListItem>(), "Value", "Text"))">
                             <option value="">Select Parent Task</option>
                         </select>
                         <span asp-validation-for="ParentTaskId" class="text-danger"></span>
+                    </div>
+                    -->
+                    <!-- Searchable Parent Task Dropdown -->
+                    <div class="mb-3" id="parentTaskContainer">
+                        <label asp-for="ParentTaskId" class="form-label">Parent Task</label>
+                        <div class="position-relative">
+                            <input type="text"
+                                   id="parentTaskSearch"
+                                   class="form-control"
+                                   placeholder="Search parent tasks..."
+                                   autocomplete="off" />
+                            <div id="parentTaskDropdown" class="dropdown-menu w-100" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                        <input type="hidden" asp-for="ParentTaskId" id="parentTaskIdHidden" />
+                        <span asp-validation-for="ParentTaskId" class="text-danger"></span>
+                        <small class="form-text text-muted">Selected: <span id="selectedParentTask">None</span></small>
                     </div>
 
                     <div class="mb-3 d-flex justify-content-between">
@@ -108,45 +125,31 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        $(document).ready(function () {
-            // Toggle ParentTaskId dropdown based on IsParent checkbox
-            $(document).on('change', '#isParentCheckbox', function () {
-                console.log("IsParent checkbox changed: " + $(this).is(':checked'));
-                var parentTaskSelect = $('#parentTaskSelect');
-                if ($(this).is(':checked')) {
-                    parentTaskSelect.prop('disabled', true);
-                    parentTaskSelect.val(''); // Clear ParentTaskId when IsParent is checked
-                } else {
-                    parentTaskSelect.prop('disabled', false);
-                }
-            });
+    <style>
+        #parentTaskDropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1050;
+            display: none;
+            min-width: 100%;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
 
-            // Trigger toggle on modal show to ensure initial state
-            $('#addTaskModal').on('shown.bs.modal', function () {
-                console.log("Modal shown, IsParent checked: " + $('#isParentCheckbox').is(':checked'));
-                var parentTaskSelect = $('#parentTaskSelect');
-                parentTaskSelect.prop('disabled', $('#isParentCheckbox').is(':checked'));
-            });
+            #parentTaskDropdown .dropdown-item {
+                cursor: pointer;
+            }
 
-            // Client-side validation and AJAX form submission
-            $('#addTaskForm').on('submit', function (e) {
-                e.preventDefault();
-                if ($(this).valid()) {
-                    $.ajax({
-                        url: $(this).attr('action'),
-                        type: $(this).attr('method'),
-                        data: $(this).serialize(),
-                        success: function (response) {
-                            $('#addTaskModal').modal('hide');
-                            location.reload();
-                        },
-                        error: function (xhr) {
-                            alert('Error adding task. Please try again.');
-                        }
-                    });
+                #parentTaskDropdown .dropdown-item:hover {
+                    background-color: #f8f9fa;
                 }
-            });
-        });
-    </script>
+
+                #parentTaskDropdown .dropdown-item.active {
+                    background-color: #007bff;
+                    color: white;
+                }
+    </style>
 }

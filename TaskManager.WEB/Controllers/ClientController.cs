@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskManager.Models.ViewModels;
 using TaskManager.Services;
 using TaskManager.Services.IServices;
 
 namespace TaskManager.WEB.Controllers
 {
+    [Authorize]
     public class ClientController(IClientService clientService) : Controller
     {
         private readonly IClientService _clientService = clientService;

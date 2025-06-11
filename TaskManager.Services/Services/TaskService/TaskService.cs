@@ -13,19 +13,27 @@ namespace TaskManager.Services.Services.TaskService
         protected readonly UserManager<User> _userManager = userManager;
         protected readonly IClientService _clientService = clientService;
 
-        public async Task<List<ParentTaskListViewModel>?> GetParentTasksAsync()
+        public async Task<List<ParentTaskListViewModel>?> GetParentTasksAsync(string? serarchTerm = null, int take = 10)
         {
             try
             {
-                List<ParentTaskListViewModel>? ParentTasksList = await _context.Tasks
-                        .Where(t => t.IsParent)
-                        .Select(t => new ParentTaskListViewModel()
-                        {
-                            Value = t.TaskId,
-                            Text = t.Title
-                        })
+                var query = _context.Tasks.Where(t => t.IsParent);
+
+                if (!string.IsNullOrWhiteSpace(serarchTerm))
+                    query = query.Where(t => t.Title.Contains(serarchTerm));
+
+                List<ParentTaskListViewModel>? ParentTasksList = await query
+                    .OrderBy(t => t.Title)
+                    .Take(take)
+                    .Select(t => new ParentTaskListViewModel()
+                    {
+                        Value = t.TaskId,
+                        Text = t.Title
+                    })
                         .ToListAsync();
+
                 return ParentTasksList;
+                //return new List<ParentTaskListViewModel>();
             }
             catch (Exception ex)
             {

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.Models.Entities;
@@ -7,6 +8,7 @@ using TaskManager.Services.IServices;
 
 namespace TaskManager.WEB.Controllers
 {
+    [Authorize]
     public class ProfileController(UserManager<User> userManager, IProfileService profileService) : Controller
     {
         private readonly UserManager<User> _userManager = userManager;

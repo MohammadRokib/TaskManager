@@ -1,16 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TaskManager.Models.Entities;
 using TaskManager.Models.ViewModels;
 
 namespace TaskManager.Services.Services.TaskService
 {
     public partial class TaskService
     {
-        public async Task<(UpdateTaskViewModel?, string?)> GetTaskByIdAsync(int? taskId)
+        public async Task<(UpdateTaskViewModel?, string?)> GetTaskByIdAsync(int? taskId, User request)
         {
             try
             {
                 UpdateTaskViewModel? taskObj = await _context.Tasks
-                .Where(t => t.TaskId == taskId)
+                .Where(t => t.TaskId == taskId && t.UserId == request.Id)
                 .Select(t => new UpdateTaskViewModel()
                 {
                     TaskId = t.TaskId,

@@ -1,5 +1,5 @@
 ﻿@using TaskManager.Models.ViewModels
-@model List<TaskDashboardViewModel>
+@model PaginatedTaskDashboard
 
 @{
     ViewData["Title"] = "Home Page";
@@ -7,8 +7,8 @@
 
 <div class="text-center">
     <h1 class="display-4">Capital Market Solutions</h1>
-    @* <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
 </div>
+
 <div class="container">
     <div class="row pt-4 pb-2">
         <div class="col-6">
@@ -22,46 +22,226 @@
         </div>
     </div>
 
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th class="text-center">
-                    Title
-                </th>
-                <th class="text-center">
-                    Client Name
-                </th>
-                <th class="text-center">
-                    Responsible
-                </th>
-                <th class="text-center">
-                    Issue Time
-                </th>
-                <th class="text-center">
-                    Status
-                </th>
-                <th class="text-center"></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach(var obj in Model) 
-            {
-                <tr>
-                    <td>@obj.TaskTitle</td>
-                    <td class="text-center">@obj.ClientFullname</td>
-                    <td class="text-center">@obj.AssignedTo</td>
-                    <td class="text-center">@obj.IssueTime.ToString("dd MMM yyyy")</td>
-                    <td class="text-center">@obj.Status</td>
-                    <td class="text-center">
-                        <div class="w-75 btn-group" role"group">
-                            <a asp-controller="Home" asp-action="Edit" asp-route-taskId="@obj.TaskId" class="btn btn-primary">
-                                <i class="bi bi-pencil-square"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <label for="pageSize">Rows per page:</label>
+            <select id="pageSize" class="form-select d-inline-block w-auto ms-2">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="taskTableContainer">
+        @await Html.PartialAsync("_TaskTablePartial", Model)
+    </div>
+
     <partial name="_AddTaskModal" model="new AddTaskViewModel { Status = TaskManager.Models.Constants.TaskStatus.New, IsParent = true, UserId = ViewBag.UserId ?? string.Empty }" />
 </div>
+
+@section Scripts {
+    <script>
+        if (typeof $ === 'undefined') {
+            console.error('jQuery is not loaded!');
+            alert('jQuery is not loaded!');
+        } else {
+            console.log('jQuery is loaded successfully');
+        }
+        
+        function loadTasks(page = 1, pageSize = $('#pageSize').val()) {
+            $('#taskTableContainer').html('<div class="text-center p-3"><div class="spinner-border" role="status"></div></div>');
+            
+            $.ajax({
+                url: '/Home/LoadTasks',
+                type: 'GET',
+                data: { page: page, pageSize: pageSize },
+                success: function (data) {
+                    $('#taskTableContainer').html(data);
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    console.log("Response:", xhr.responseText);
+                    alert('Failed to load tasks.');
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            // loadTasks(1);
+
+            let searchTimeout;
+            let currentSelectedId = null;
+            let currentSelectedText = '';
+
+            // Load on page size change
+            $('#pageSize').on('change', function () {
+                loadTasks(1);
+            });
+
+            // Delegate click event for dynamic content
+            $(document).on('click', '.pagination-link', function (e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                const pageSize = $('#pageSize').val();
+                loadTasks(page, pageSize);
+            });
+
+            // Initialize parent task search functionality
+            function initializeParentTaskSearch() {
+                const $searchInput = $('#parentTaskSearch');
+                const $dropdown = $('#parentTaskDropdown');
+                const $hiddenInput = $('#parentTaskIdHidden');
+                const $selectedText = $('#selectedParentTask');
+
+                // Load initial parent tasks
+                loadParentTasks('');
+
+                // Handle search input
+                $searchInput.on('input', function() {
+                    const searchTerm = $(this).val();
+
+                    // Clear previous timeout
+                    if (searchTimeout) {
+                        clearTimeout(searchTimeout);
+                    }
+
+                    // Debounce search to avoid too many requests
+                    searchTimeout = setTimeout(() => {
+                        loadParentTasks(searchTerm);
+                    }, 300);
+                });
+
+                // Show dropdown on focus
+                $searchInput.on('focus', function() {
+                    $dropdown.show();
+                    if ($dropdown.children().length === 0) {
+                        loadParentTasks('');
+                    }
+                });
+
+                // Hide dropdown when clicking outside
+                $(document).on('click', function(e) {
+                    if (!$(e.target).closest('#parentTaskContainer').length) {
+                        $dropdown.hide();
+                    }
+                });
+
+                // Handle item selection
+                $dropdown.on('click', '.dropdown-item', function(e) {
+                    e.preventDefault();
+                    const value = $(this).data('value');
+                    const text = $(this).text();
+
+                    selectParentTask(value, text);
+                });
+
+                function loadParentTasks(searchTerm) {
+                    $.ajax({
+                        url: '/Home/SearchParentTasks',
+                        type: 'GET',
+                        data: { searchTerm: searchTerm, take: 10 },
+                        success: function(data) {
+                            $dropdown.empty();
+
+                            if (data.length === 0) {
+                                $dropdown.append('<div class="dropdown-item-text text-muted">No parent tasks found</div>');
+                            } else {
+                                // Add clear selection option
+                                $dropdown.append('<a class="dropdown-item text-danger" href="#" data-value="">Clear Selection</a>');
+                                $dropdown.append('<div class="dropdown-divider"></div>');
+
+                                data.forEach(function(item) {
+                                    const isSelected = currentSelectedId == item.value ? ' active' : '';
+                                    $dropdown.append(`<a class="dropdown-item${isSelected}" href="#" data-value="${item.value}">${item.text}</a>`);
+                                });
+                            }
+
+                            $dropdown.show();
+                        },
+                        error: function() {
+                            $dropdown.html('<div class="dropdown-item-text text-danger">Error loading parent tasks</div>');
+                            $dropdown.show();
+                        }
+                    });
+                }
+
+                function selectParentTask(value, text) {
+                    if (value === '' || value === null) {
+                        // Clear selection
+                        currentSelectedId = null;
+                        currentSelectedText = '';
+                        $searchInput.val('');
+                        $hiddenInput.val('');
+                        $selectedText.text('None');
+                    } else {
+                        currentSelectedId = value;
+                        currentSelectedText = text;
+                        $searchInput.val(text);
+                        $hiddenInput.val(value);
+                        $selectedText.text(text);
+                    }
+                    $dropdown.hide();
+                }
+            }
+
+            // Toggle ParentTask search based on IsParent checkbox
+            $(document).on('change', '#isParentCheckbox', function () {
+                const $parentTaskContainer = $('#parentTaskContainer');
+                const $searchInput = $('#parentTaskSearch');
+                const $hiddenInput = $('#parentTaskIdHidden');
+                const $selectedText = $('#selectedParentTask');
+
+                if ($(this).is(':checked')) {
+                    // If it's a parent task, disable parent task selection
+                    $parentTaskContainer.hide();
+                    $searchInput.val('');
+                    $hiddenInput.val('');
+                    $selectedText.text('None');
+                    currentSelectedId = null;
+                    currentSelectedText = '';
+                } else {
+                    // If it's not a parent task, enable parent task selection
+                    $parentTaskContainer.show();
+                }
+            });
+
+            // Initialize on modal show
+            $('#addTaskModal').on('shown.bs.modal', function () {
+                // Reset form
+                currentSelectedId = null;
+                currentSelectedText = '';
+                $('#selectedParentTask').text('None');
+                $('#parentTaskSearch').val('');
+                $('#parentTaskIdHidden').val('');
+
+                // Initialize parent task search
+                initializeParentTaskSearch();
+
+                // Set initial state based on IsParent checkbox
+                const isParent = $('#isParentCheckbox').is(':checked');
+                $('#parentTaskContainer').toggle(!isParent);
+            });
+
+            // Form submission
+            $('#addTaskForm').on('submit', function (e) {
+                e.preventDefault();
+                if ($(this).valid()) {
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        type: $(this).attr('method'),
+                        data: $(this).serialize(),
+                        success: function (response) {
+                            $('#addTaskModal').modal('hide');
+                            location.reload();
+                        },
+                        error: function (xhr) {
+                            alert('Error adding task. Please try again.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

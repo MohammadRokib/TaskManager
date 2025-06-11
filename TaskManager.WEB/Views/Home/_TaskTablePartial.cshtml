@@ -1,0 +1,96 @@
+﻿@using TaskManager.Models.ViewModels
+@model PaginatedTaskDashboard
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th class="text-center">Title</th>
+            <th class="text-center">Client Name</th>
+            <th class="text-center">Responsible</th>
+            <th class="text-center">Issue Time</th>
+            <th class="text-center">Status</th>
+            <th class="text-center"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var obj in Model.Tasks)
+        {
+            <tr>
+                <td>@obj.TaskTitle</td>
+                <td class="text-center">@obj.ClientFullname</td>
+                <td class="text-center">@obj.AssignedTo</td>
+                <td class="text-center">@obj.IssueTime.ToString("dd MMM yyyy")</td>
+                <td class="text-center">@obj.Status</td>
+                <td class="text-center">
+                    <div class="w-75 btn-group" role="group">
+                        <a asp-controller="Home" asp-action="Edit" asp-route-taskId="@obj.TaskId" class="btn btn-primary">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@{
+    // int totalPages = (int)Math.Ceiling((double)Model.TotalRecords / Model.PageSize);
+    // int currentPage = Model.CurrentPage;
+    // int maxVisiblePages = 5;
+    // int startPage = Math.Max(1, currentPage - 2);
+    // int endPage = Math.Min(totalPages, startPage + maxVisiblePages - 1);
+
+    // if (endPage - startPage + 1 < maxVisiblePages)
+    //     startPage = Math.Max(1, endPage - maxVisiblePages + 1);
+
+    var currentPage = Model.CurrentPage;
+    var totalPages = Model.TotalPages;
+    var startPage = Model.StartPage;
+    var endPage = Model.EndPage;
+}
+
+<!-- DEBUG -->
+<div class="alert alert-warning">
+    Page: @currentPage | TotalPages: @totalPages | Start: @startPage | End: @endPage
+</div>
+
+<nav>
+    <ul class="pagination justify-content-center">
+        <!-- First -->
+        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+            <a class="page-link pagination-link" href="#" data-page="1">First</a>
+        </li>
+
+        <!-- Previous -->
+        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+            <a class="page-link pagination-link" href="#" data-page="@(currentPage - 1)">Previous</a>
+        </li>
+
+        @if (startPage > 1)
+        {
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        }
+
+        @for (int i = startPage; i <= endPage; i++)
+        {
+            <li class="page-item @(currentPage == i ? "active" : "")">
+                <a class="page-link pagination-link" href="#" data-page="@i">@i</a>
+            </li>
+        }
+
+        @if (endPage < totalPages)
+        {
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        }
+
+        <!-- Next -->
+        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+            <a class="page-link pagination-link" href="#" data-page="@(currentPage + 1)">Next</a>
+        </li>
+
+        <!-- Last -->
+        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+            <a class="page-link pagination-link" href="#" data-page="@totalPages">Last</a>
+        </li>
+    </ul>
+</nav>
