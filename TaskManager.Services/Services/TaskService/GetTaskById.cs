@@ -12,6 +12,7 @@ namespace TaskManager.Services.Services.TaskService
             {
                 UpdateTaskViewModel? taskObj = await _context.Tasks
                 .Where(t => t.TaskId == taskId && t.UserId == request.Id)
+                .Include(t => t.Client)
                 .Select(t => new UpdateTaskViewModel()
                 {
                     TaskId = t.TaskId,
@@ -22,10 +23,16 @@ namespace TaskManager.Services.Services.TaskService
                     Severity = t.Severity,
                     IsParent = t.IsParent,
                     ClientId = t.ClientId,
+                    Client = t.Client,
                     UserId = t.UserId,
                     ParentTaskId = t.ParentTaskId
                 })
                 .FirstOrDefaultAsync();
+
+                if (taskId is not null && taskId != 0)
+                {
+                    taskObj!.ParentTask = await GetParentTask(taskObj!.ParentTaskId ?? 0);
+                }
 
                 if (taskObj is null)
                     return (null, "Task not found");
@@ -37,6 +44,23 @@ namespace TaskManager.Services.Services.TaskService
                 Console.WriteLine(ex);
                 return (null, "Something went wrong");
             }
+        }
+
+        private async Task<ParentTaskListViewModel?> GetParentTask(int? id)
+        {
+            if (id is null || id == 0)
+                return new ParentTaskListViewModel();
+
+            ParentTaskListViewModel? parentTask = await _context.Tasks
+                .Where(t => t.TaskId == id)
+                .Select(t => new ParentTaskListViewModel()
+                {
+                    Value = t.TaskId,
+                    Text = t.Title
+                })
+                .FirstOrDefaultAsync();
+
+            return parentTask;
         }
     }
 }

@@ -17,24 +17,41 @@
             <input asp-for="Title" class="form-control" />
             <span asp-validation-for="Title" class="text-danger"></span>
         </div>
+
         <!-- Description -->
         <div class="mb-3">
             <label asp-for="Description" class="form-label"></label>
             <textarea asp-for="Description" class="form-control" rows="5"></textarea>
             <span asp-validation-for="Description" class="text-danger"></span>
         </div>
+
         <!-- IsParent Checkbox -->
         <div class="mb-3 form-check">
-            <input asp-for="IsParent" class="form-check-input" id="isParentCheckbox" />
+            @if (@Model.IsParent)
+            {
+                <input asp-for="IsParent" class="form-check-input" id="isParentCheckbox" checked />
+            } else
+            {
+                <input asp-for="IsParent" class="form-check-input" id="isParentCheckbox" />
+            }
             <label asp-for="IsParent" class="form-check-label"></label>
         </div>
-        <!-- Parent Task -->
+
+        <!-- Searchable Parent Task Dropdown -->
         <div class="mb-3" id="parentTaskContainer">
-            <label asp-for="ParentTaskId" class="form-label"></label>
-            <select asp-for="ParentTaskId" class="form-control" id="parentTaskSelect" asp-items="@(new SelectList(ViewBag.ParentTasks ?? new List<SelectListItem>(), "Value", "Text"))">
-                <option value="">Select Parent Task</option>
-            </select>
+            <label asp-for="ParentTaskId" class="form-label">Parent Task</label>
+            <div class="position-relative">
+                <input type="text"
+                       id="parentTaskSearch"
+                       class="form-control"
+                       placeholder="Search parent tasks..."
+                       autocomplete="off"
+                       value="@(Model?.ParentTask?.Text ?? null) "/>
+                <div id="parentTaskDropdown" class="dropdown-menu w-100" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+            <input type="hidden" asp-for="ParentTaskId" id="parentTaskIdHidden" />
             <span asp-validation-for="ParentTaskId" class="text-danger"></span>
+            <small class="form-text text-muted">Selected: <span id="selectedParentTask">None</span></small>
         </div>
 
         <!-- Status, Priority, and Severity in a single row with flexbox -->
@@ -73,6 +90,7 @@
                 </select>
             </div>
         </div>
+
         <!-- Duration, ClientId, and UserId in a single row with flexbox -->
         <div class="mb-3 d-flex justify-content-between">
             <!-- Duration -->
@@ -96,6 +114,7 @@
                 <input type="hidden" asp-for="UserId" />
             </div>
         </div>
+
         <!-- Form Buttons -->
         <div class="mb-3">
             <button type="submit" class="btn btn-primary me-2">Submit</button>
@@ -107,44 +126,242 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        $(document).ready(function () {
-            // Toggle ParentTaskId dropdown based on IsParent checkbox
-            $(document).on('change', '#isParentCheckbox', function () {
-                console.log("IsParent checkbox changed: " + $(this).is(':checked'));
-                var parentTaskContainer = $('#parentTaskContainer');
-                if ($(this).is(':checked')) {
-                    parentTaskContainer.hide();
-                    $('#parentTaskSelect').val(''); // Clear ParentTaskId when IsParent is checked
+        console.log("Edit page");
+        document.addEventListener('DOMContentLoaded', function() {
+            let searchTimeout;
+            let currentSelectedId = '@Model?.ParentTaskId' || null;
+            let currentSelectedText = '@Model?.ParentTask?.Text' || "";
+
+            console.log(currentSelectedId);
+            console.log(currentSelectedText);
+
+            // Initialize parent task search functionality
+            function initializeParentTaskSearch() {
+                const searchInput = document.getElementById('parentTaskSearch');
+                const dropdown = document.getElementById('parentTaskDropdown');
+                const hiddenInput = document.getElementById('parentTaskIdHidden');
+                const selectedText = document.getElementById('selectedParentTask');
+
+                // Set initial values if there's a current parent task
+                if (currentSelectedId && currentSelectedText) {
+                    searchInput.value = currentSelectedText;
+                    hiddenInput.value = currentSelectedId;
+                    selectedText.textContent = currentSelectedText;
                 } else {
-                    parentTaskContainer.show();
+                    selectedText.textContent = 'None';
+                }
+
+                // Handle escape key to cancel search and restore original value
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        dropdown.style.display = 'none';
+                        // Restore original value
+                        if (currentSelectedId && currentSelectedText) {
+                            this.value = currentSelectedText;
+                        } else {
+                            this.value = '';
+                        }
+                        this.blur();
+                    }
+                });
+
+                // Handle search input
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value;
+
+                    // If search term is empty and we have a current selection, don't search
+                    if (searchTerm === '' && currentSelectedId && currentSelectedText) {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+
+                    // Clear previous timeout
+                    if (searchTimeout) {
+                        clearTimeout(searchTimeout);
+                    }
+
+                    // Debounce search to avoid too many requests
+                    searchTimeout = setTimeout(() => {
+                        loadParentTasks(searchTerm);
+                    }, 300);
+                });
+
+                // Show dropdown on focus
+                searchInput.addEventListener('focus', function() {
+                    if (dropdown.children.length === 0) {
+                        loadParentTasks('');
+                    } else {
+                        dropdown.style.display = 'block';
+                    }
+                });
+
+                // Hide dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('#parentTaskContainer')) {
+                        dropdown.style.display = 'none';
+                        // If user clicked away without selecting, restore original value
+                        if (currentSelectedId && currentSelectedText && searchInput.value !== currentSelectedText) {
+                            searchInput.value = currentSelectedText;
+                        } else if (!currentSelectedId && searchInput.value !== '') {
+                            searchInput.value = '';
+                        }
+                    }
+                });
+
+                // Handle item selection
+                dropdown.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('dropdown-item')) {
+                        e.preventDefault();
+                        const value = e.target.dataset.value;
+                        const text = e.target.textContent;
+
+                        selectParentTask(value, text);
+                    }
+                });
+
+                function loadParentTasks(searchTerm) {
+                    // Exclude current task from parent selection
+                    const excludeTaskId = @Model.TaskId;
+
+                    fetch(`/Home/SearchParentTasks?searchTerm=${encodeURIComponent(searchTerm)}&take=10`)
+                        .then(response => response.json())
+                        .then(data => {
+                            dropdown.innerHTML = '';
+
+                            if (data.length === 0) {
+                                dropdown.innerHTML = '<div class="dropdown-item-text text-muted">No parent tasks found</div>';
+                            } else {
+                                // Add clear selection option
+                                dropdown.innerHTML = `
+                                    <a class="dropdown-item text-danger" href="#" data-value="">Clear Selection</a>
+                                    <div class="dropdown-divider"></div>
+                                `;
+
+                                data.forEach(function(item) {
+                                    const isSelected = currentSelectedId == item.value ? ' active' : '';
+                                    dropdown.innerHTML += `<a class="dropdown-item${isSelected}" href="#" data-value="${item.value}">${item.text}</a>`;
+                                });
+                            }
+
+                            dropdown.style.display = 'block';
+                        })
+                        .catch(() => {
+                            dropdown.innerHTML = '<div class="dropdown-item-text text-danger">Error loading parent tasks</div>';
+                            dropdown.style.display = 'block';
+                        });
+                }
+
+                function selectParentTask(value, text) {
+                    if (value === '' || value === null) {
+                        // Clear selection - but preserve original values if user cancels
+                        if (confirm('Are you sure you want to clear the parent task selection?')) {
+                            currentSelectedId = null;
+                            currentSelectedText = '';
+                            searchInput.value = '';
+                            hiddenInput.value = '';
+                            selectedText.textContent = 'None';
+                        } else {
+                            // User cancelled, restore previous values
+                            if (currentSelectedId && currentSelectedText) {
+                                searchInput.value = currentSelectedText;
+                            }
+                        }
+                    } else {
+                        currentSelectedId = value;
+                        currentSelectedText = text;
+                        searchInput.value = text;
+                        hiddenInput.value = value;
+                        selectedText.textContent = text;
+                    }
+                    dropdown.style.display = 'none';
+                }
+            }
+
+            // Toggle ParentTask search based on IsParent checkbox
+            document.getElementById('isParentCheckbox').addEventListener('change', function() {
+                console.log("IsParent checkbox changed: " + this.checked);
+                const parentTaskContainer = document.getElementById('parentTaskContainer');
+                const searchInput = document.getElementById('parentTaskSearch');
+                const hiddenInput = document.getElementById('parentTaskIdHidden');
+                const selectedText = document.getElementById('selectedParentTask');
+
+                if (this.checked) {
+                    // If it's a parent task, disable parent task selection
+                    parentTaskContainer.style.display = 'none';
+                    searchInput.value = '';
+                    hiddenInput.value = '';
+                    selectedText.textContent = 'None';
+                    currentSelectedId = null;
+                    currentSelectedText = '';
+                } else {
+                    // If it's not a parent task, enable parent task selection
+                    parentTaskContainer.style.display = 'block';
                 }
             });
 
-            // Trigger toggle on page load to ensure initial state
-            var parentTaskContainer = $('#parentTaskContainer');
-            if ($('#isParentCheckbox').is(':checked')) {
-                parentTaskContainer.hide();
-            } else {
-                parentTaskContainer.show();
-            }
+            // Initialize parent task search on page load
+            initializeParentTaskSearch();
 
-            // Client-side validation and AJAX form submission
-            $('#updateTaskForm').on('submit', function (e) {
+            // Set initial state based on IsParent checkbox
+            const isParent = document.getElementById('isParentCheckbox').checked;
+            document.getElementById('parentTaskContainer').style.display = isParent ? 'none' : 'block';
+
+            // Client-side validation and form submission
+            document.getElementById('updateTaskForm').addEventListener('submit', function(e) {
                 e.preventDefault();
-                if ($(this).valid()) {
-                    $.ajax({
-                        url: $(this).attr('action'),
-                        type: $(this).attr('method'),
-                        data: $(this).serialize(),
-                        success: function (response) {
-                            window.location.href = '@Url.Action("Index", "Home")';
-                        },
-                        error: function (xhr) {
-                            alert('Error updating task. Please try again.');
+
+                // Simple validation check - you might want to implement more robust validation
+                if (this.checkValidity()) {
+                    const formData = new FormData(this);
+
+                    fetch(this.action, {
+                        method: this.method,
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
                         }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = '@Url.Action("Index", "Home")';
+                        } else {
+                            throw new Error('Error updating task');
+                        }
+                    })
+                    .catch(() => {
+                        alert('Error updating task. Please try again.');
                     });
                 }
             });
         });
     </script>
+
+    <style>
+        #parentTaskDropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1050;
+            display: none;
+            min-width: 100%;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+            #parentTaskDropdown .dropdown-item {
+                cursor: pointer;
+            }
+
+                #parentTaskDropdown .dropdown-item:hover {
+                    background-color: #f8f9fa;
+                }
+
+                #parentTaskDropdown .dropdown-item.active {
+                    background-color: #007bff;
+                    color: white;
+                }
+    </style>
 }

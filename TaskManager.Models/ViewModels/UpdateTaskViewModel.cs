@@ -11,5 +11,7 @@ namespace TaskManager.Models.ViewModels
     {
         public int TaskId { get; set; }
         public double? Duration { get; set; }
+        public Client? Client { get; set; }
+        public ParentTaskListViewModel? ParentTask { get; set; }
     }
 }

@@ -29,25 +29,7 @@
                         <input asp-for="IsParent" class="form-check-input" id="isParentCheckbox" checked />
                         <label asp-for="IsParent" class="form-check-label"></label>
                     </div>
-                    <!-- ParentTaskId Dropdown (Hidden by default) -->
-                    @* <div class="mb-3" id="parentTaskContainer"> *@
-                    @*     <label asp-for="ParentTaskId" class="form-label">Parent Task</label> *@
-                    @*     <select asp-for="ParentTaskId" class="form-control" id="parentTaskSelect" asp-items="@ViewBag.ParentTasks" disabled> *@
-                    @*         <option value="">Select Parent Task</option> *@
-                    @*     </select> *@
-                    @*     <span asp-validation-for="ParentTaskId" class="text-danger"></span> *@
-                    @* </div> *@
-
-                    @* <div class="mb-3" id="parentTaskContainer" style="display: none;"> *@
-                    <!--
-                    <div class="mb-3" id="parentTaskContainer">
-                        <label asp-for="ParentTaskId" class="form-label"></label>
-                        <select asp-for="ParentTaskId" class="form-control" id="parentTaskSelect" asp-items="@(new SelectList(ViewBag.ParentTasks ?? new List<SelectListItem>(), "Value", "Text"))">
-                            <option value="">Select Parent Task</option>
-                        </select>
-                        <span asp-validation-for="ParentTaskId" class="text-danger"></span>
-                    </div>
-                    -->
+                    
                     <!-- Searchable Parent Task Dropdown -->
                     <div class="mb-3" id="parentTaskContainer">
                         <label asp-for="ParentTaskId" class="form-label">Parent Task</label>

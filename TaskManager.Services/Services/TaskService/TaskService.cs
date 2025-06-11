@@ -33,7 +33,6 @@ namespace TaskManager.Services.Services.TaskService
                         .ToListAsync();
 
                 return ParentTasksList;
-                //return new List<ParentTaskListViewModel>();
             }
             catch (Exception ex)
             {
