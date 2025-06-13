@@ -60,7 +60,6 @@ namespace TaskManager.WEB.Controllers
                 return BadRequest("Error loading tasks.");
 
             return PartialView("_TaskTablePartial", tasks ?? new PaginatedTaskDashboard());
-            //return Content($"Page: {page}, PageSize: {pageSize}, Tasks: {tasks?.Tasks?.Count ?? 0}");
         }
 
         [HttpGet]

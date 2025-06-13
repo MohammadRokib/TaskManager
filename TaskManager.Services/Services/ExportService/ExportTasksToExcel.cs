@@ -14,11 +14,7 @@ namespace TaskManager.Services.Services.ExportService
             try
             {
                 ExcelPackage.License.SetNonCommercialPersonal("MohammadRokib");
-
                 using var package = new ExcelPackage();
-                var worksheet = package.Workbook.Worksheets.Add("Tasks");
-
-                SetupWorkSheetHeaders(worksheet);
 
                 var totalCount = await _context.Tasks
                     .Where(t => t.UserId == userId)
@@ -26,18 +22,41 @@ namespace TaskManager.Services.Services.ExportService
 
                 _logger.LogInformation($"Starting export of {totalCount} tasks for user {userId}");
 
-                var currentRow = 2;
+                var currentWorksheet = 1;
+                var currentRowInSheet = 2;
                 var processedCount = 0;
+
+                ExcelWorksheet worksheet = null;
 
                 while (processedCount < totalCount)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
+                    if (worksheet == null || currentRowInSheet > MAX_ROWS_PER_SHEET)
+                    {
+                        var sheetName = currentRowInSheet == 1 ? "Tasks" : $"Tasks_{currentWorksheet}";
+                        worksheet = package.Workbook.Worksheets.Add(sheetName);
+                        SetupWorkSheetHeaders(worksheet);
+                        currentRowInSheet = 2;
+                        currentWorksheet++;
+                    }
+
                     var batch = await GetTaskBatchAsync(userId, processedCount, BATCH_SIZE, cancellationToken);
                     foreach (var task in batch)
                     {
-                        PopulateTaskRow(worksheet, currentRow, task);
-                        currentRow++;
+                        if (currentRowInSheet > MAX_ROWS_PER_SHEET)
+                        {
+                            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                            var sheetName = $"Tasks_{currentWorksheet}";
+                            worksheet = package.Workbook.Worksheets.Add(sheetName);
+                            SetupWorkSheetHeaders(worksheet);
+                            currentRowInSheet = 2;
+                            currentWorksheet++;
+                        }
+                        
+                        PopulateTaskRow(worksheet, currentRowInSheet, task);
+                        currentRowInSheet++;
                     }
 
                     processedCount += batch.Count;
@@ -47,12 +66,13 @@ namespace TaskManager.Services.Services.ExportService
                         break;
                 }
 
-                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+                if (worksheet != null && worksheet.Dimension != null)
+                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
                 var fileInfo = new FileInfo(filePath);
                 await package.SaveAsAsync(fileInfo, cancellationToken);
 
-                _logger.LogInformation($"Excel export completed. File saved: {filePath}");
+                _logger.LogInformation($"Excel export completed with {currentWorksheet - 1} worksheets. File saved: {filePath}");
                 return filePath;
             }
             catch (Exception ex)

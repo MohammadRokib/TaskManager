@@ -10,6 +10,8 @@ namespace TaskManager.Services.Services.ExportService
     public partial class TaskExportService : ITaskExportService
     {
         private const int BATCH_SIZE = 10000;
+        private const int MAX_ROWS_PER_SHEET = 1048575;
+
         private readonly string _tempFolderPath;
         private readonly TaskManagerDbContext _context;
         private readonly ILogger<TaskExportService> _logger;
