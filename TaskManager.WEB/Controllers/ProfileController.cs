@@ -16,6 +16,7 @@ namespace TaskManager.WEB.Controllers
 
         public async Task<IActionResult> Index()
         {
+            Console.WriteLine("Running tests\n\n\n\n\n\n\n\n\n");
             try
             {
                 User? currentUser = await _userManager.GetUserAsync(User);

@@ -29,13 +29,13 @@ namespace TaskManager.Services.Services.TaskService
                 })
                 .FirstOrDefaultAsync();
 
+                if (taskObj is null)
+                    return (null, "Task not found");
+
                 if (taskId is not null && taskId != 0)
                 {
                     taskObj!.ParentTask = await GetParentTask(taskObj!.ParentTaskId ?? 0);
                 }
-
-                if (taskObj is null)
-                    return (null, "Task not found");
 
                 return (taskObj, null);
             }

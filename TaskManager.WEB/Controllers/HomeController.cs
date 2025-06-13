@@ -18,13 +18,20 @@ namespace TaskManager.WEB.Controllers
         private readonly IClientService _clientService;
         private readonly UserManager<User> _userManager;
         private readonly ILogger<HomeController> _logger;
+        private readonly ITaskExportService _taskExportService;
 
-        public HomeController(ILogger<HomeController> logger, ITaskService taskService, UserManager<User> userManager, IClientService clientService)
+        public HomeController(
+            ITaskService taskService,
+            IClientService clientService,
+            UserManager<User> userManager,
+            ILogger<HomeController> logger,
+            ITaskExportService taskExportService)
         {
             _logger = logger;
             _taskService = taskService;
             _userManager = userManager;
             _clientService = clientService;
+            _taskExportService = taskExportService;
         }
 
         public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
@@ -85,6 +92,50 @@ namespace TaskManager.WEB.Controllers
             }
 
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadTaskExcel(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser is null)
+                    return Unauthorized("User not authenticated");
+
+                var userId = currentUser.Id;
+                _logger.LogInformation($"Starting Excel export for user: {userId}");
+
+                var filePath = await _taskExportService.ExportTasksToExcelAsync(userId, cancellationToken);
+                if (!System.IO.File.Exists(filePath))
+                    return NotFound("Export file could not be generated");
+
+                //var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                var fileName = Path.GetFileName(filePath);
+
+                _ = System.Threading.Tasks.Task.Run(async () =>
+                {
+                    await System.Threading.Tasks.Task.Delay(TimeSpan.FromMinutes(2), CancellationToken.None);
+                    await _taskExportService.CleanupExportFileAsync(filePath);
+                });
+
+                return PhysicalFile(
+                    filePath,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName,
+                    enableRangeProcessing: true
+                );
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("Excel export canceled for user");
+                return StatusCode(499, "Request canceled");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during excel export");
+                return StatusCode(500, "An error occured while generating the file");
+            }
         }
 
         public async Task<IActionResult> Edit(int? taskId)

@@ -12,6 +12,7 @@ namespace TaskManager.WEB.Controllers
         private readonly IClientService _clientService = clientService;
         public async Task<IActionResult> Index()
         {
+            Console.WriteLine("Running tests");
             (List<ClientDashboardViewModel>? clients, string? error) = await _clientService.GetClientDashBoardAsync();
             if (error is null)
                 return View(clients);
