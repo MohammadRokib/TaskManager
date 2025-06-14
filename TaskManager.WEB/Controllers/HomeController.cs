@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -104,7 +105,7 @@ namespace TaskManager.WEB.Controllers
                 //string userId = null;
                 _logger.LogInformation($"Starting Excel export for user: {userId}");
 
-                var filePath = await _taskExportService.ExportTasksToExcelSpAsync(userId, cancellationToken);
+                var filePath = await _taskExportService.ExportTasksToExcelAsync(userId, cancellationToken);
                 if (!System.IO.File.Exists(filePath))
                     return NotFound("Export file could not be generated");
 

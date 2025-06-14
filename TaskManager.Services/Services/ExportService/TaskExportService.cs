@@ -49,8 +49,8 @@ namespace TaskManager.Services.Services.ExportService
             var headers = new[]
             {
                 "Task ID", "Title", "Description", "Duration (Hours)",
-                "Status", "Priority", "Severity", "Is Parent", "Responsible",
-                "Client", "Parent Task ID"
+                "Status", "Priority", "Severity", "Responsible", "Client",
+                 "Is Parent", "Parent Task ID"
             };
 
             for (int i = 0; i < headers.Length; i++)
@@ -115,9 +115,9 @@ namespace TaskManager.Services.Services.ExportService
             worksheet.Cells[row, 5].Value = task.Status.ToString();
             worksheet.Cells[row, 6].Value = task.Priority.ToString();
             worksheet.Cells[row, 7].Value = task.Severity.ToString();
-            worksheet.Cells[row, 8].Value = task.IsParent ? "Yes" : "No";
             worksheet.Cells[row, 9].Value = task.User?.Name ?? "N/A";
             worksheet.Cells[row, 10].Value = task.Client?.ClientFullName ?? "N/A";
+            worksheet.Cells[row, 8].Value = task.IsParent ? "Yes" : "No";
             worksheet.Cells[row, 11].Value = task.ParentTaskId;
         }
 

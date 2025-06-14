@@ -289,18 +289,49 @@
             });
 
             // Form submission
+            // $('#addTaskForm').on('submit', function (e) {
+            //     e.preventDefault();
+            //     console.log(this);
+            //     if ($(this).valid()) {
+            //         $.ajax({
+            //             url: $(this).attr('action'),
+            //             type: $(this).attr('method'),
+            //             data: $(this).serialize(),
+            //             success: function (response) {
+            //                 $('#addTaskModal').modal('hide');
+            //                 location.reload();
+            //             },
+            //             error: function (xhr) {
+            //                 alert('Error adding task. Please try again.');
+            //             }
+            //         });
+            //     }
+            // });
+
+            $('#addTaskForm').validate();
             $('#addTaskForm').on('submit', function (e) {
                 e.preventDefault();
-                if ($(this).valid()) {
+
+                const form = $(this);
+                const action = form.attr('action');
+
+                if (!action) {
+                    console.error('Form action is undefined');
+                    // Fallback to default action
+                    form.attr('action', '/Home/CreateTask');
+                }
+
+                if (form.valid()) {
                     $.ajax({
-                        url: $(this).attr('action'),
-                        type: $(this).attr('method'),
-                        data: $(this).serialize(),
+                        url: form.attr('action'),
+                        type: form.attr('method'),
+                        data: form.serialize(),
                         success: function (response) {
                             $('#addTaskModal').modal('hide');
-                            location.reload();
+                            loadTasks(); // Refresh the task list
                         },
                         error: function (xhr) {
+                            console.error('Error:', xhr.responseText);
                             alert('Error adding task. Please try again.');
                         }
                     });
