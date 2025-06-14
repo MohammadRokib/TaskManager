@@ -16,6 +16,9 @@
         </div>
 
         <div class="col-6 text-end">
+            <button type="button" class="btn btn-success me-2" id="downloadExcelBtn">
+                <i class="bi bi-file-earmark-excel"></i> Download Excel
+            </button>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
                 <i class="bi bi-plus-square-fill"></i> Add New Task
             </button>
@@ -41,6 +44,24 @@
     <partial name="_AddTaskModal" model="new AddTaskViewModel { Status = TaskManager.Models.Constants.TaskStatus.New, IsParent = true, UserId = ViewBag.UserId ?? string.Empty }" />
 </div>
 
+<!-- Loading Modal for Excel Download -->
+<div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 class="mb-2">Preparing Excel Export</h5>
+                <p class="text-muted mb-0">Please wait while we generate your Excel file...</p>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         if (typeof $ === 'undefined') {
@@ -49,10 +70,10 @@
         } else {
             console.log('jQuery is loaded successfully');
         }
-        
+
         function loadTasks(page = 1, pageSize = $('#pageSize').val()) {
             $('#taskTableContainer').html('<div class="text-center p-3"><div class="spinner-border" role="status"></div></div>');
-            
+
             $.ajax({
                 url: '/Home/LoadTasks',
                 type: 'GET',
@@ -68,8 +89,51 @@
             });
         }
 
+        // Excel Download Functionality
+        function downloadExcel() {
+            const $btn = $('#downloadExcelBtn');
+            const $modal = $('#downloadModal');
+
+            // Show loading modal
+            $modal.modal('show');
+
+            // Disable button and show loading state
+            $btn.prop('disabled', true);
+            const originalText = $btn.html();
+            $btn.html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Preparing...');
+
+            // Create a temporary form to trigger file download
+            const $form = $('<form>', {
+                'method': 'GET',
+                'action': '/Home/DownloadTaskExcel'
+            });
+
+            // Add form to body and submit
+            $form.appendTo('body').submit().remove();
+
+            // Reset button state after a delay (since file download doesn't trigger success/error callbacks)
+            setTimeout(function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                $modal.modal('hide');
+            }, 3000);
+
+            // Also handle if user cancels or there's an error
+            setTimeout(function() {
+                if ($btn.prop('disabled')) {
+                    $btn.prop('disabled', false);
+                    $btn.html(originalText);
+                    $modal.modal('hide');
+                }
+            }, 30000); // 30 second timeout
+        }
+
         $(document).ready(function () {
-            // loadTasks(1);
+            // Excel download button click handler
+            $('#downloadExcelBtn').on('click', function(e) {
+                e.preventDefault();
+                downloadExcel();
+            });
 
             let searchTimeout;
             let currentSelectedId = null;

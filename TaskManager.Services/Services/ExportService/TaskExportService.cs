@@ -4,6 +4,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using TaskManager.Services.IServices;
+using Microsoft.Data.SqlClient;
+using System.Data;
+using TaskManager.Models.Constants;
 
 namespace TaskManager.Services.Services.ExportService
 {
@@ -75,6 +78,34 @@ namespace TaskManager.Services.Services.ExportService
                 .ToListAsync(cancellationToken);
         }
 
+        private async Task<int> GetTaskCountAsync(string userId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+
+                using var command = new SqlCommand("sp_GetTaskCountForUser", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 300
+                };
+
+                command.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 450)
+                {
+                    Value = string.IsNullOrEmpty(userId) ? DBNull.Value : userId
+                });
+
+                var result = await command.ExecuteScalarAsync(cancellationToken);
+                return Convert.ToInt32(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting task count");
+                return 0;
+            }
+        }
+
         private void PopulateTaskRow(ExcelWorksheet worksheet, int row, Models.Entities.Task task)
         {
             worksheet.Cells[row, 1].Value = task.TaskId;
@@ -88,6 +119,33 @@ namespace TaskManager.Services.Services.ExportService
             worksheet.Cells[row, 9].Value = task.User?.Name ?? "N/A";
             worksheet.Cells[row, 10].Value = task.Client?.ClientFullName ?? "N/A";
             worksheet.Cells[row, 11].Value = task.ParentTaskId;
+        }
+
+        private void PopulateTaskRowFromReader(ExcelWorksheet worksheet, int row, SqlDataReader reader)
+        {
+            worksheet.Cells[row, 1].Value = reader.GetInt32("TaskId");
+            worksheet.Cells[row, 2].Value = reader.IsDBNull("Title") ? "" : reader.GetString("Title");
+            worksheet.Cells[row, 3].Value = reader.IsDBNull("Description") ? "" : reader.GetString("Description");
+            worksheet.Cells[row, 4].Value = reader.IsDBNull("Duration") ? 0 : reader.GetDouble("Duration");
+            worksheet.Cells[row, 5].Value = GetEnumNameOrDefault<Models.Constants.TaskStatus>(reader, "Status");
+            worksheet.Cells[row, 6].Value = GetEnumNameOrDefault<Priority>(reader, "Priority");
+            worksheet.Cells[row, 7].Value = GetEnumNameOrDefault<Severity>(reader, "Severity");
+            worksheet.Cells[row, 8].Value = reader.IsDBNull("UserName") ? "N/A" : reader.GetString("UserName");
+            worksheet.Cells[row, 9].Value = reader.IsDBNull("ClientFullName") ? "N/A" : reader.GetString("ClientFullName");
+            worksheet.Cells[row, 10].Value = reader.IsDBNull("IsParent") ? "No" : (reader.GetBoolean("IsParent") ? "Yes" : "No");
+            worksheet.Cells[row, 11].Value = reader.IsDBNull("ParentTaskId") ? (int?)null : reader.GetInt32("ParentTaskId");
+        }
+
+        private string GetEnumNameOrDefault<TEnum>(SqlDataReader reader, string columnName) where TEnum : Enum
+        {
+            if (!reader.IsDBNull(columnName))
+            {
+                int value = reader.GetInt32(reader.GetOrdinal(columnName));
+                return Enum.IsDefined(typeof(TEnum), value)
+                    ? ((TEnum)(object)value).ToString()
+                    : $"Unkonw ({value})";
+            }
+            return "";
         }
     }
 }

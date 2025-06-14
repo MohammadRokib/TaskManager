@@ -2,10 +2,8 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using TaskManager.DataAccess.Data;
 using TaskManager.Models.Entities;
 using TaskManager.Models.ViewModels;
-using TaskManager.Services;
 using TaskManager.Services.IServices;
 using TaskManager.WEB.Models;
 
@@ -103,9 +101,10 @@ namespace TaskManager.WEB.Controllers
                     return Unauthorized("User not authenticated");
 
                 var userId = currentUser.Id;
+                //string userId = null;
                 _logger.LogInformation($"Starting Excel export for user: {userId}");
 
-                var filePath = await _taskExportService.ExportTasksToExcelAsync(userId, cancellationToken);
+                var filePath = await _taskExportService.ExportTasksToExcelSpAsync(userId, cancellationToken);
                 if (!System.IO.File.Exists(filePath))
                     return NotFound("Export file could not be generated");
 
@@ -114,7 +113,7 @@ namespace TaskManager.WEB.Controllers
 
                 _ = System.Threading.Tasks.Task.Run(async () =>
                 {
-                    await System.Threading.Tasks.Task.Delay(TimeSpan.FromMinutes(2), CancellationToken.None);
+                    await System.Threading.Tasks.Task.Delay(TimeSpan.FromMinutes(4), CancellationToken.None);
                     await _taskExportService.CleanupExportFileAsync(filePath);
                 });
 
